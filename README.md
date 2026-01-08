@@ -123,7 +123,6 @@ Presenter - презентер содержит основную логику п
 #### Покупатель (IBuyer)
 
 `type TPayment = string;
-
 interface IBuyer {
   payment: TPayment;
   email: string;

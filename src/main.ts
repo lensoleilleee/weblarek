@@ -2,13 +2,13 @@ import './scss/styles.scss';
 
 import { apiProducts } from './utils/data';
 
-import { ProductsCatalog } from './components/Models/ProductsCatalog';
-import { Basket } from './components/Models/Basket';
-import { Buyer } from './components/Models/Buyer';
+import { ProductsCatalog } from './components/models/ProductsCatalog';
+import { Basket } from './components/models/Basket';
+import { Buyer } from './components/models/Buyer';
 
 import { Api } from './components/base/Api';
 import { API_URL } from './utils/constants';
-import { WebLarekApi } from './components/Communication/WebLarekApi';
+import { WebLarekApi } from './components/communication/WebLarekApi';
 
 // проверка каталога товаров (локальные данные из data.ts)
 const productsModel = new ProductsCatalog();

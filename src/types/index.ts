@@ -34,7 +34,7 @@ export interface IProductsResponse {
 }
 
 // данные для отправки заказа
-export type IOrder = IBuyer & {
+export type TOrder = IBuyer & {
   items: string[];
   total: number;
 };

@@ -24,9 +24,14 @@ export class Basket extends Component<{
 
   set items(value: HTMLElement[]) {
     this.listEl.replaceChildren(...value);
+    this.toggleButton(value.length > 0);
   }
 
   set total(value: number) {
     this.totalEl.textContent = `${value} синапсов`;
+  }
+
+  private toggleButton(enabled: boolean): void {
+    this.submitButton.disabled = !enabled;
   }
 }

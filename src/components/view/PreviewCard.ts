@@ -3,6 +3,7 @@ import { IEvents } from "../base/Events";
 
 export type PreviewCardData = CardData & {
   description: string;
+  buttonText?: string;
 };
 
 export class PreviewCard extends Card<PreviewCardData> {
@@ -16,12 +17,16 @@ export class PreviewCard extends Card<PreviewCardData> {
     this.buttonEl = container.querySelector(".card__button");
 
     this.buttonEl?.addEventListener("click", () => {
-      this.events.emit("product:buy", { id: this._id });
+      this.events.emit("preview:toggle");
     });
   }
 
   set description(value: string) {
     if (this.descriptionEl) this.descriptionEl.textContent = value;
+  }
+
+  set buttonText(value: string) {
+    if (this.buttonEl) this.buttonEl.textContent = value;
   }
 
   // отключение кнопки при price === null

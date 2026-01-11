@@ -24,7 +24,7 @@ import { OrderForm } from "./components/view/OrderForm";
 import { ContactsForm } from "./components/view/ContactsForm";
 import { Success } from "./components/view/Success";
 
-import { IOrder } from "./types";
+import { TOrder } from "./types";
 
 //инициализация брокера событий
 const events = new EventEmitter();
@@ -68,14 +68,36 @@ const successTemplate = document.querySelector(
   "#success"
 ) as HTMLTemplateElement;
 
-let basketView: BasketView | null = null;
-let orderFormView: OrderForm | null = null;
-let contactsFormView: ContactsForm | null = null;
-let isBasketModalOpen = false;
+const basketNode = basketTemplate.content.firstElementChild!.cloneNode(
+  true
+) as HTMLElement;
+const basketView = new BasketView(basketNode, events);
 
-events.on("modal:close", () => {
-  isBasketModalOpen = false;
+basketView.render({
+  items: [],
+  total: 0,
+  valid: false,
 });
+
+const orderFormNode = orderTemplate.content.firstElementChild!.cloneNode(
+  true
+) as HTMLFormElement;
+const orderFormView = new OrderForm(orderFormNode, events);
+
+const contactsFormNode = contactsTemplate.content.firstElementChild!.cloneNode(
+  true
+) as HTMLFormElement;
+const contactsFormView = new ContactsForm(contactsFormNode, events);
+
+const previewNode = previewTemplate.content.firstElementChild!.cloneNode(
+  true
+) as HTMLElement;
+const previewCardView = new PreviewCard(previewNode, events);
+
+const successNode = successTemplate.content.firstElementChild!.cloneNode(
+  true
+) as HTMLElement;
+const successView = new Success(successNode, events);
 
 //обработчик изменения каталога
 events.on("catalog:changed", () => {
@@ -113,41 +135,40 @@ events.on("preview:changed", () => {
   const product = productsModel.getPreview();
   if (!product) return;
 
-  const node = previewTemplate.content.firstElementChild!.cloneNode(
-    true
-  ) as HTMLElement;
-  const previewCard = new PreviewCard(node, events);
+  const inBasket = basketModel.has(product.id);
 
-  const content = previewCard.render({
-    id: product.id,
-    title: product.title,
-    price: product.price,
-    category: product.category,
-    description: product.description,
-    image: `${CDN_URL}/${product.image}`,
+  modal.render({
+    content: previewCardView.render({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      category: product.category,
+      description: product.description,
+      image: `${CDN_URL}/${product.image}`,
+      buttonText: inBasket ? "Удалить из корзины" : "Купить",
+    }),
   });
 
-  modal.render({ content });
   modal.open();
 });
 
-//добавление товара в корзину
-events.on<{ id: string }>("product:buy", ({ id }) => {
-  const product = productsModel.getProductById(id);
-  if (!product) return;
+events.on("preview:toggle", () => {
+  const selected = productsModel.getPreview();
+  if (!selected) return;
 
-  basketModel.add(product);
+  if (basketModel.has(selected.id)) {
+    basketModel.remove(selected);
+  } else {
+    basketModel.add(selected);
+  }
+
+  modal.close();
 });
 
 //обновление ui при изменении корзины
 events.on("basket:changed", () => {
   header.counter = basketModel.getCount();
 
-  const basketNode = basketTemplate.content.firstElementChild!.cloneNode(
-    true
-  ) as HTMLElement;
-  basketView = new BasketView(basketNode, events);
-
   const items = basketModel.getItems();
 
   const renderedItems = items.map((product, index) => {
@@ -169,41 +190,10 @@ events.on("basket:changed", () => {
     total: basketModel.getTotal(),
     valid: items.length > 0,
   });
-
-  if (isBasketModalOpen) {
-    modal.render({ content: basketView.render() });
-  }
 });
 
 //открытие корзины
 events.on("basket:open", () => {
-  isBasketModalOpen = true;
-  const basketNode = basketTemplate.content.firstElementChild!.cloneNode(
-    true
-  ) as HTMLElement;
-  basketView = new BasketView(basketNode, events);
-
-  const items = basketModel.getItems();
-  const renderedItems = items.map((product, index) => {
-    const node = basketItemTemplate.content.firstElementChild!.cloneNode(
-      true
-    ) as HTMLElement;
-    const itemCard = new BasketItemCard(node, events);
-
-    return itemCard.render({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      index: index + 1,
-    });
-  });
-
-  basketView.render({
-    items: renderedItems,
-    total: basketModel.getTotal(),
-    valid: items.length > 0,
-  });
-
   modal.render({ content: basketView.render() });
   modal.open();
 });
@@ -218,11 +208,6 @@ events.on<{ id: string }>("basket:remove", ({ id }) => {
 
 //переход к оформлению из корзины
 events.on("order:open", () => {
-  const formNode = orderTemplate.content.firstElementChild!.cloneNode(
-    true
-  ) as HTMLFormElement;
-  orderFormView = new OrderForm(formNode, events);
-
   modal.render({ content: orderFormView.render({ valid: false, errors: "" }) });
   modal.open();
 });
@@ -238,11 +223,6 @@ events.on<{ field: "address"; value: string }>("order:change", ({ value }) => {
 
 //переход к contactform из orderform
 events.on("order:submit", () => {
-  const formNode = contactsTemplate.content.firstElementChild!.cloneNode(
-    true
-  ) as HTMLFormElement;
-  contactsFormView = new ContactsForm(formNode, events);
-
   modal.render({
     content: contactsFormView.render({ valid: false, errors: "" }),
   });
@@ -265,27 +245,14 @@ events.on("buyer:changed", () => {
   const orderValid = !errors.payment && !errors.address;
   const contactsValid = !errors.email && !errors.phone;
 
-  if (orderFormView) {
-    orderFormView.render({
-      valid: orderValid,
-      errors: errorsText,
-    });
-  }
+  orderFormView.render({ valid: orderValid, errors: errorsText });
 
-  if (contactsFormView) {
-    contactsFormView.render({
-      valid: contactsValid,
-      errors: errorsText,
-    });
-  }
+  contactsFormView.render({ valid: contactsValid, errors: errorsText });
 });
 
-
 events.on("contacts:submit", () => {
-  const buyer = buyerModel.getData();
-
-  const order: IOrder = {
-    ...buyer,
+  const order: TOrder = {
+    ...buyerModel.getData(),
     items: basketModel.getItems().map((p) => p.id),
     total: basketModel.getTotal(),
   };
@@ -293,19 +260,11 @@ events.on("contacts:submit", () => {
   webApi
     .createOrder(order)
     .then((result) => {
-      const node = successTemplate.content.firstElementChild!.cloneNode(
-        true
-      ) as HTMLElement;
-      const success = new Success(node, events);
-
-      modal.render({ content: success.render({ total: result.total }) });
+      modal.render({ content: successView.render({ total: result.total }) });
       modal.open();
 
       basketModel.clear();
       buyerModel.clear();
-
-      orderFormView = null;
-      contactsFormView = null;
     })
     .catch((err) => {
       console.error("Ошибка оформления заказа:", err);

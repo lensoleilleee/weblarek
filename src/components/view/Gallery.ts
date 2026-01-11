@@ -1,11 +1,11 @@
-import { Component } from '../base/Component';
+import { Component } from "../base/Component";
 
 export class Gallery extends Component<{ catalog: HTMLElement[] }> {
-    constructor(container: HTMLElement) {
-        super(container);
-    }
+  constructor(container: HTMLElement) {
+    super(container);
+  }
 
-    set catalog(items: HTMLElement[]) {
-        this.container.replaceChildren(...items);
-    }
+  set catalog(items: HTMLElement[]) {
+    this.container.replaceChildren(...items);
+  }
 }

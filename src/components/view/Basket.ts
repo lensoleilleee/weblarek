@@ -25,8 +25,4 @@ export class Basket extends Component<{ items: HTMLElement[]; total: number; val
     set total(value: number) {
         this.totalEl.textContent = `${value} синапсов`;
     }
-
-    set valid(value: boolean) {
-        this.submitButton.disabled = !value;
-    }
 }

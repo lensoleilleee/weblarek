@@ -230,3 +230,235 @@ interface IBuyer {
 `getProducts(): Promise<IProduct[]>` — выполняет GET запрос на эндпоинт `/product/` и возвращает массив товаров;  
 `createOrder(order: IOrder): Promise<IOrderResult>` — выполняет POST запрос на эндпоинт `/order/` и отправляет данные заказа, полученные в параметрах метода.
 
+
+## Шаг 2. Документация классов слоя Представления (View)
+
+Этот раздел описывает все классы View-слоя, необходимые для отображения сайта **Web-Larek** по макету и текущей вёрстке.  
+View-слой отвечает **только за DOM и пользовательские действия**: получает данные от Presenter, отображает их и **генерирует события** на каждое действие пользователя.
+
+
+
+## Ключевые правила
+
+- **Один класс View = один блок разметки** (один `container`).
+- Три карточки (разные templates) имеют **общего родителя** `Card`.
+- Две формы имеют **общего родителя** `Form<T>`.
+- `Modal` **не имеет наследников**. Контент модального окна — самостоятельные компоненты (карточка, корзина, формы, экран успеха).
+- Любое действие пользователя → `emit(...)`, событие обрабатывает Presenter.
+
+
+
+## Компоненты страницы
+
+### Header
+
+Компонент шапки сайта.
+
+#### Публичный API
+
+- `set counter(value: number)` — обновить значение счётчика.
+
+#### События
+
+- `basket:open` — клик по `.header__basket`.
+
+
+
+### Gallery (`.gallery`)
+
+Контейнер каталога (список карточек на главной странице).
+
+#### DOM
+
+- `.gallery` — контейнер карточек.
+
+#### Данные
+
+```ts
+type GalleryData = {
+  catalog: HTMLElement[];
+};
+```
+
+#### Публичный API
+
+- `set catalog(items: HTMLElement[])` — заменить содержимое галереи.
+
+#### События
+
+- События напрямую не генерирует (генерируются карточками товаров).
+
+
+
+## Модальное окно
+
+### Modal (`#modal-container`)
+
+Оболочка модального окна. **Не имеет дочерних классов**.  
+Любой компонент (корзина, форма, карточка, экран успеха) может быть отрисован внутри модального окна.
+
+#### DOM
+
+- `#modal-container` — корневой элемент
+- `.modal__close` — закрытие
+- `.modal__content` — контейнер контента
+
+#### Данные
+
+```ts
+type ModalData = {
+  content: HTMLElement;
+};
+```
+
+#### Публичный API
+
+- `open(): void` — открыть модальное окно
+- `close(): void` — закрыть модальное окно
+- `set content(node: HTMLElement)` — вставить контент в `.modal__content`
+
+#### События
+
+- `modal:close` — закрытие пользователем (кнопка / оверлей / ESC — если реализовано)
+
+
+
+## Карточки товаров
+
+Карточки используют три HTML-шаблона:
+
+- `#card-catalog`
+- `#card-preview`
+- `#card-basket`
+
+Все карточки наследуются от общего родителя **Card**, в который вынесен общий функционал:
+заголовок, цена, категория, изображение и логика рендера.
+
+
+
+### Card (base)
+
+Базовый класс карточки товара.
+
+#### Данные
+
+```ts
+type CardData = {
+  id: string;
+  title: string;
+  price: number | null;
+  category?: string;
+  image?: string;
+  description?: string;
+  index?: number;
+};
+```
+
+#### Публичный API
+
+- `set title(value: string)`
+- `set price(value: number | null)`
+- `set category(value: string)`
+- `set image(value: { src: string; alt?: string })`
+
+
+
+### CatalogCard (`#card-catalog`)
+
+Карточка товара в каталоге.
+
+#### DOM
+
+- `button.gallery__item.card` — корневой элемент
+- `.card__category`
+- `.card__title`
+- `.card__image`
+- `.card__price`
+
+#### События
+
+- `card:select` — клик по карточке (открыть превью).  
+  Payload: `{ id }`
+
+
+
+### PreviewCard (`#card-preview`)
+
+Подробная карточка товара (обычно отображается в модальном окне).
+
+#### DOM
+
+- `.card__image`
+- `.card__category`
+- `.card__title`
+- `.card__text`
+- `.card__price`
+- `.card__button` — кнопка «В корзину»
+
+#### Публичный API
+
+- `set description(value: string)` — заполнить `.card__text`
+- *(опционально)* `set buttonText(value: string)`
+
+#### События
+
+- `product:buy` — клик по кнопке «В корзину».  
+  Payload: `{ id }`
+
+
+
+### BasketItemCard (`#card-basket`)
+
+Строка товара в корзине.
+
+#### DOM
+
+- `.basket__item-index`
+- `.card__title`
+- `.card__price`
+- `.basket__item-delete` — кнопка удаления
+
+#### Публичный API
+
+- `set index(value: number)` — установить номер позиции в корзине
+
+#### События
+
+- `basket:remove` — удаление товара.  
+  Payload: `{ id }`
+
+
+
+## Корзина
+
+### Basket (`#basket`)
+
+Компонент корзины: список товаров, сумма и кнопка оформления заказа.
+
+#### DOM
+
+- `.basket__list` — список позиций
+- `.basket__price` — сумма заказа
+- `.basket__button` — кнопка «Оформить»
+
+#### Данные
+
+```ts
+type BasketData = {
+  items: HTMLElement[];
+  total: number;
+};
+```
+
+#### Публичный API
+
+- `set items(value: HTMLElement[])` — отрисовать список `.basket__list`
+- `set total(value: number)` — обновить сумму
+- *(опционально)* `set valid(value: boolean)` — включить/выключить кнопку оформления
+
+#### События
+
+- `order:open` — клик по кнопке оформления
+
+
+

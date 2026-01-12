@@ -1,24 +1,25 @@
 import { Card, CardData } from "./Card";
-import { IEvents } from "../base/Events";
 
 export type PreviewCardData = CardData & {
   description: string;
   buttonText?: string;
 };
 
+type PreviewCardActions = {
+  onToggle: () => void;
+};
+
 export class PreviewCard extends Card<PreviewCardData> {
   private descriptionEl: HTMLElement | null;
   private buttonEl: HTMLButtonElement | null;
 
-  constructor(container: HTMLElement, events: IEvents) {
-    super(container, events);
+  constructor(container: HTMLElement, actions: PreviewCardActions) {
+    super(container);
 
     this.descriptionEl = container.querySelector(".card__text");
     this.buttonEl = container.querySelector(".card__button");
 
-    this.buttonEl?.addEventListener("click", () => {
-      this.events.emit("preview:toggle");
-    });
+    this.buttonEl?.addEventListener("click", actions.onToggle);
   }
 
   set description(value: string) {

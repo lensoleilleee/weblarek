@@ -1,12 +1,13 @@
 import { Card, CardData } from "./Card";
-import { IEvents } from "../base/Events";
+
+type CatalogCardActions = {
+  onClick: () => void
+};
 
 export class CatalogCard extends Card<CardData> {
-  constructor(container: HTMLElement, events: IEvents) {
-    super(container, events);
+  constructor(container: HTMLElement, actions: CatalogCardActions) {
+    super(container);
 
-    this.container.addEventListener("click", () => {
-      this.events.emit("card:select", { id: this._id });
-    });
+    this.container.addEventListener("click", actions.onClick);
   }
 }

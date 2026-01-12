@@ -15,10 +15,13 @@ export class OrderForm extends Form {
     this.cashButton.addEventListener("click", () => this.selectPayment("cash"));
   }
 
-  private selectPayment(payment: "card" | "cash") {
+  public setPayment(payment: "card" | "cash" | ""): void {
     this.cardButton.classList.toggle("button_alt-active", payment === "card");
     this.cashButton.classList.toggle("button_alt-active", payment === "cash");
+  }
 
+  private selectPayment(payment: "card" | "cash") {
+    this.setPayment(payment);
     this.events.emit("order:payment", { payment });
   }
 

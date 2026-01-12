@@ -1,9 +1,7 @@
 import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
 import { categoryMap } from "../../utils/constants";
 
 export type CardData = {
-  id: string;
   title: string;
   price: number | null;
   category?: string;
@@ -11,28 +9,18 @@ export type CardData = {
 };
 
 export class Card<T extends CardData = CardData> extends Component<T> {
-  protected events: IEvents;
-
   protected titleEl: HTMLElement | null;
   protected priceEl: HTMLElement | null;
   protected categoryEl: HTMLElement | null;
   protected imageEl: HTMLImageElement | null;
 
-  // для презентера
-  protected _id: string = "";
-
-  constructor(container: HTMLElement, events: IEvents) {
+  constructor(container: HTMLElement) {
     super(container);
-    this.events = events;
-
+    
     this.titleEl = container.querySelector(".card__title");
     this.priceEl = container.querySelector(".card__price");
     this.categoryEl = container.querySelector(".card__category");
     this.imageEl = container.querySelector(".card__image");
-  }
-
-  set id(value: string) {
-    this._id = value;
   }
 
   set title(value: string) {

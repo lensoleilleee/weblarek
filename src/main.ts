@@ -73,11 +73,8 @@ const basketNode = basketTemplate.content.firstElementChild!.cloneNode(
 ) as HTMLElement;
 const basketView = new BasketView(basketNode, events);
 
-basketView.render({
-  items: [],
-  total: 0,
-  valid: false,
-});
+basketView.items = [];
+basketView.total = 0;
 
 const orderFormNode = orderTemplate.content.firstElementChild!.cloneNode(
   true
@@ -92,12 +89,30 @@ const contactsFormView = new ContactsForm(contactsFormNode, events);
 const previewNode = previewTemplate.content.firstElementChild!.cloneNode(
   true
 ) as HTMLElement;
-const previewCardView = new PreviewCard(previewNode, events);
+const previewCardView = new PreviewCard(previewNode, {
+  onToggle: () => events.emit("preview:toggle"),
+});
 
 const successNode = successTemplate.content.firstElementChild!.cloneNode(
   true
 ) as HTMLElement;
 const successView = new Success(successNode, events);
+
+function syncForms(): void {
+  const data = buyerModel.getData();
+
+  orderFormView.setValues({
+    address: data.address ?? "",
+  });
+
+  orderFormView.setPayment((data.payment as "card" | "cash" | "") ?? "");
+
+  contactsFormView.setValues({
+    email: data.email ?? "",
+    phone: data.phone ?? "",
+  });
+}
+
 
 //обработчик изменения каталога
 events.on("catalog:changed", () => {
@@ -108,10 +123,11 @@ events.on("catalog:changed", () => {
       true
     ) as HTMLElement;
 
-    const card = new CatalogCard(node, events);
+    const card = new CatalogCard(node, {
+      onClick: () => productsModel.setPreview(product),
+    });
 
     return card.render({
-      id: product.id,
       title: product.title,
       price: product.price,
       category: product.category,
@@ -120,14 +136,6 @@ events.on("catalog:changed", () => {
   });
 
   gallery.render({ catalog: cards });
-});
-
-//клик по карточке
-events.on<{ id: string }>("card:select", ({ id }) => {
-  const product = productsModel.getProductById(id);
-  if (!product) return;
-
-  productsModel.setPreview(product);
 });
 
 // preview в модалке
@@ -139,7 +147,6 @@ events.on("preview:changed", () => {
 
   modal.render({
     content: previewCardView.render({
-      id: product.id,
       title: product.title,
       price: product.price,
       category: product.category,
@@ -175,10 +182,11 @@ events.on("basket:changed", () => {
     const node = basketItemTemplate.content.firstElementChild!.cloneNode(
       true
     ) as HTMLElement;
-    const itemCard = new BasketItemCard(node, events);
+    const itemCard = new BasketItemCard(node, {
+      onRemove: () => basketModel.remove(product),
+    });
 
     return itemCard.render({
-      id: product.id,
       title: product.title,
       price: product.price,
       index: index + 1,
@@ -198,16 +206,10 @@ events.on("basket:open", () => {
   modal.open();
 });
 
-//удаление товара из корзины
-events.on<{ id: string }>("basket:remove", ({ id }) => {
-  const product = productsModel.getProductById(id);
-  if (!product) return;
-
-  basketModel.remove(product);
-});
-
 //переход к оформлению из корзины
 events.on("order:open", () => {
+  syncForms();
+
   modal.render({ content: orderFormView.render({ valid: false, errors: "" }) });
   modal.open();
 });
@@ -223,6 +225,8 @@ events.on<{ field: "address"; value: string }>("order:change", ({ value }) => {
 
 //переход к contactform из orderform
 events.on("order:submit", () => {
+  syncForms();
+  
   modal.render({
     content: contactsFormView.render({ valid: false, errors: "" }),
   });
@@ -239,6 +243,8 @@ events.on<{ field: "email" | "phone"; value: string }>(
 
 //валидность
 events.on("buyer:changed", () => {
+  syncForms();
+
   const errors = buyerModel.validate();
   const errorsText = Object.values(errors).filter(Boolean).join(". ");
 
@@ -265,6 +271,8 @@ events.on("contacts:submit", () => {
 
       basketModel.clear();
       buyerModel.clear();
+
+      syncForms();
     })
     .catch((err) => {
       console.error("Ошибка оформления заказа:", err);

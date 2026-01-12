@@ -36,6 +36,15 @@ export abstract class Form extends Component<{
     this.errorsEl.textContent = value;
   }
 
+  public setValues(values: Partial<Record<string, string>>): void {
+    this.inputs.forEach((input) => {
+      const v = values[input.name];
+      if (v !== undefined) {
+        input.value = v;
+      }
+    });
+  }
+
   // абстрактные методы
   protected abstract onInput(field: string, value: string): void;
   protected abstract onSubmit(): void;

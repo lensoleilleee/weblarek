@@ -1,4 +1,4 @@
-import { IApi, IOrder, IOrderResult, IProduct, IProductsResponse } from '../../types';
+import { IApi, TOrder, IOrderResult, IProduct, IProductsResponse } from '../../types';
 
 export class WebLarekApi {
   private api: IApi;
@@ -12,7 +12,7 @@ export class WebLarekApi {
     return res.items;
   }
 
-  createOrder(order: IOrder): Promise<IOrderResult> {
+  createOrder(order: TOrder): Promise<IOrderResult> {
     return this.api.post<IOrderResult>('/order/', order);
   }
 }

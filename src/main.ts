@@ -207,8 +207,6 @@ events.on("basket:open", () => {
 
 //переход к оформлению из корзины
 events.on("order:open", () => {
-  syncForms();
-
   modal.render({ content: orderFormView.render({ valid: false, errors: "" }) });
   modal.open();
 });
@@ -224,8 +222,6 @@ events.on<{ field: "address"; value: string }>("order:change", ({ value }) => {
 
 //переход к contactform из orderform
 events.on("order:submit", () => {
-  syncForms();
-
   modal.render({
     content: contactsFormView.render({ valid: false, errors: "" }),
   });
@@ -270,8 +266,6 @@ events.on("contacts:submit", () => {
 
       basketModel.clear();
       buyerModel.clear();
-
-      syncForms();
     })
     .catch((err) => {
       console.error("Ошибка оформления заказа:", err);
